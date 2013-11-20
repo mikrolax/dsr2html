@@ -1,4 +1,6 @@
 
+[![Build Status](https://travis-ci.org/mikrolax/dsr2html.png?branch=master)](https://travis-ci.org/mikrolax/dsr2html)
+
 ## What are .dsr file
 - - -
 
