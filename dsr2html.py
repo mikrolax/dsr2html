@@ -63,12 +63,12 @@ class Dsr2Html(object):
     self.failedProcessLst = []
     self.dsrFileLst = []
     self.perf=''
-
+    
   def parse(self,fin):          
     """ parse a .Dsr file and return it as a dict. """
     self.tree.parse(fin)
     self.rootElem = self.tree.getroot() 
-    self.headerLst = self.rootElem.findall('header') #should have only one... but return list!
+    self.headerLst = self.rootElem.findall('header')
     self.stepsElem=self.rootElem.find('steps')    
     self.stepElemLst=self.stepsElem.findall('step')      
     for elem in self.rootElem.findall('global'):
@@ -267,8 +267,18 @@ class Dsr2Html(object):
     else:
       logging.warning('Nothing to do, no .Dsr files found')
 
+  def load_json(self,folder): 
+    files=glob.glob(os.path.join(folder,'*.json')) #load recursively?
+    results={}
+    for f in files:
+      key='%s' %os.path.basename(f)
+      results[key]=json.load(f)
+    return results
+
   def run_from_json(self,filepath):
     logging.warning('not implemented')
+    dsr=self.load_json(filepath)
+    #output tests/steps table per json file
     pass
     
     
