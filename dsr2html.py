@@ -1,7 +1,7 @@
 #/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__description__=""" simple .dsr (XML) to .html converter, with some fancy CSS & JS """
+__description__=""" simple .dsr (XML subset adapted to tests report) to .html converter """
 __project__ = 'dsr2html'
 __version__ = '2.0.beta'
 __author__ = 'sebastien stang'
@@ -33,6 +33,7 @@ static_files+=glob.glob(os.path.join(_module_path(), 'static','*.jpg'))
 static_files+=glob.glob(os.path.join(_module_path(), 'static','*.png'))
 
 default_title='Test Report'
+errors_expressions=['error','ko','failed']
     
 class Dsr2Html(object):
   def __init__(self): 
@@ -102,14 +103,29 @@ class Dsr2Html(object):
       commentLst=elem.findall('comment')
       for item in commentLst:
         if item.text:
-          comment+=item.text+'<br>'
+          comment_lines=item.text.split('\n')
+          for line in comment_lines:
+            for expression in errors_expressions:
+              if expression in line.lower():
+                comment+='<b><span style=\"color:#FF0000\"> %s </span></b>' %line
+	      else:
+                comment+=line
+            comment+='<br>'
       if elem.find('step_result').text == 'OK':
         html+='<tr class="success">'    
       elif elem.find('step_result').text == 'KO':
         html+='<tr class="error">'    
       else:
         html+='<tr>'
-      html+='<td>%s</td><td>%s</td>' %(elem.find('number').text,elem.find('action').text)
+      actionContent = elem.find('action').text.split('\n')
+      html+='<td> %s </td><td>' %(elem.find('number').text)
+      for actionContentLine in actionContent:
+        html+='<ol>'
+        if len(actionContentLine) > 0:
+          html+='<li> %s </li>' %(actionContentLine)
+        html+='</ol>'
+      html+='</td>'
+      #html+='<td>%s</td><td>%s</td>' %(elem.find('number').text,elem.find('action').text)
       step_res=elem.find('step_result').text
       if  step_res == 'OK':
         html+='<td><span class="badge badge-success">%s</span></td>' %(step_res)
@@ -251,6 +267,11 @@ class Dsr2Html(object):
     else:
       logging.warning('Nothing to do, no .Dsr files found')
 
+  def run_from_json(self,filepath):
+    logging.warning('not implemented')
+    pass
+    
+    
 log_format='%(asctime)s:%(levelname)s - %(message)s' #%(name)s
  
 def process_path(path,log_level=logging.INFO):
@@ -261,6 +282,15 @@ def process_path(path,log_level=logging.INFO):
     converter.run(path) 
   else:
     logging.error('Invalid path : %s' %path)
+
+def process_json(filepath,log_level=logging.INFO):
+  logging.basicConfig(format=log_format,level=log_level)
+  if os.path.exists(filepath):
+    logging.info('process_json %s' %filepath)
+    converter=Dsr2Html()
+    converter.run_from_json(filepath)
+  else:
+    logging.error('Invalid path : %s' %filepath)
     
 def cli():
   import argparse
