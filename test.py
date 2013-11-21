@@ -9,6 +9,31 @@ import shutil
 import unittest
 import dsr2html
 
+import json #py2.6+ only...
+
+step_dict_passed={'number':1,
+                  'action':'', #test empty
+                  'step_result':'warning blabla\n\nbla\nand also some errors bla\n\n blabla'}
+           
+test_header={'name':'dsr2html tests',
+             'title':'test',
+             'description':'generate a dsr and check the html output'}
+
+step_dict_warn={'number':2,
+                'action':'do something',
+                'step_result':'warning blabla\n\nbla\n'}
+
+step_dict_err={'number':3,
+               'action':'do something\nand something else',
+               'step_result':'blabla\n\nand also some errors bla\n\n blabla'}
+
+test_global={'duration':None,
+             'result':None}
+                       
+test_dict={'header':test_header,
+           'step':[step_dict_passed,step_dict_warn,step_dict_err], 
+           'global':test_global}
+          
 class TestError(Exception):
   pass
 
@@ -35,9 +60,15 @@ class Tests(unittest.TestCase):
               'python dsr2html.py -q test',
               'python dsr2html.py -tpl %s -of _custom test' %test_tpl]
     
-  def test_module(self):
-      dsr2html.process_path(os.path.join('test')) #instanciate and run
+  def test_module_from_dsrpath(self):
+    dsr2html.process_path(os.path.join('test')) #instanciate and run
 
+  def test_module_from_dict(self):
+    filepath=os.path.join('test','testdict.json')
+    fileobj=open(filepath,'w')
+    json.dump(test_dict,fileobj)
+    dsr2html.process_json(filepath)
+    
   def test_cli(self):
     for cmd in self.cmd:
       print 'test cmd : %s' %cmd
