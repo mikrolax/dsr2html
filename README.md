@@ -38,23 +38,27 @@ A test contains many 'steps'
 
 ## Install / Use  
 - - -  
-* install  
+* __Install__  
 
 dsr2html does not need to be installed, but you can:  
   
         python setup.py install
 
 
-* use   
-If installed:  
+* __Use__   
+
+Let's try to print software's version:  
+
+If installed run  
 
         dsr2html -v
 
-If not installed:  
+If not installed (runnning from source) run  
 
         python /path/to/dsr2html.py -v
 
-If you use windows static binary, use `dsr2html.exe -v`  
+If you use windows static binary, run `dsr2html.exe -v`  
+
 
 ## Command line interface  
 - - -  
