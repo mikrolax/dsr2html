@@ -16,12 +16,7 @@
   </head>
   <body>
  
-  <div class="container">
   $content
-  <footer>
-  <hr>
-  </footer>      
-  </div>  
   
   <script src="static/jquery.min.js"></script>
   <script src="static/bootstrap.min.js"></script>

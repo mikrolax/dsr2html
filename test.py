@@ -8,31 +8,7 @@ import shlex
 import shutil
 import unittest
 import dsr2html
-
-import json #py2.6+ only...
-
-step_dict_passed={'number':1,
-                  'action':'', #test empty
-                  'step_result':'warning blabla\n\nbla\nand also some errors bla\n\n blabla'}
-           
-test_header={'name':'dsr2html tests',
-             'title':'test',
-             'description':'generate a dsr and check the html output'}
-
-step_dict_warn={'number':2,
-                'action':'do something',
-                'step_result':'warning blabla\n\nbla\n'}
-
-step_dict_err={'number':3,
-               'action':'do something\nand something else',
-               'step_result':'blabla\n\nand also some errors bla\n\n blabla'}
-
-test_global={'duration':None,
-             'result':None}
-                       
-test_dict={'header':test_header,
-           'step':[step_dict_passed,step_dict_warn,step_dict_err], 
-           'global':test_global}
+import datetime
           
 class TestError(Exception):
   pass
@@ -58,41 +34,84 @@ class Tests(unittest.TestCase):
     self.cmd=['python dsr2html.py -h',
               'python dsr2html.py -d test', 
               'python dsr2html.py -q test',
-              'python dsr2html.py -tpl %s -of _custom test' %test_tpl]
+              'python dsr2html.py -tpl %s -of _custom test' %test_tpl]    
     
-  def test_module_from_dsrpath(self):
-    dsr2html.process_path(os.path.join('test')) #instanciate and run
-
-  def test_module_from_dict(self):
-    filepath=os.path.join('test','testdict.json')
-    fileobj=open(filepath,'w')
-    json.dump(test_dict,fileobj)
-    dsr2html.process_json(filepath)
+  def test_1_module_process_path(self):
+    dsr=dsr2html.Dsr()
+    dsr.name='test process path function'
+    dsr.title='process_path() function'
+    dsr.description='Test process_path module function'
+    path=os.path.join('test')
+    start=datetime.datetime.now()
+    dsr2html.process_path(path)
+    end=datetime.datetime.now()
+    dsr.add_step('proces path : %s'%path,'OK',comment='test passed')
+    dsr.duration='%s' %(end-start)
+    #dsr.tofile(os.path.join('test','module_process_path.json'))
+    dsr.tofile(os.path.join('test','module_process_path.Dsr'))
     
-  def test_cli(self):
+  def test_2_cli(self):
+    dsr=dsr2html.Dsr()
+    dsr.name='test command line interface'
+    dsr.title='command line interface tests'
+    dsr.description='Test cli() module function'
+    start=datetime.datetime.now()
     for cmd in self.cmd:
       print 'test cmd : %s' %cmd
       err=subprocess.call(shlex.split(cmd))
       if err!=0:
+        dsr.add_step('test command line interface by executing: %s'%cmd,'OK',comment='test return error %s'%err)
+        #self.dsr.add_step('test command line interface by executing: %s' %cmd,'OK',comment='test return error %s'%err)
         raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
+      else:
+        dsr.add_step('test command line interface by executing %s'%cmd,'OK',comment='test passed')
+        #self.dsr.add_step('test command line interface by executing %s' %cmd,'OK',comment='test passed')
       #self.assertEqual(err,0)
+    end=datetime.datetime.now()
+    dsr.duration='%s' %(end-start)
+    #dsr.tofile(os.path.join('test','cli.json'))
+    dsr.tofile(os.path.join('test','cli.Dsr'))
 
-  def test_build(self):
+  def test_3_build(self):
+    dsr=dsr2html.Dsr()
+    dsr.name='test dsr2html build'
+    dsr.title='dsr2html build'
+    dsr.description='Test build'
+    start=datetime.datetime.now()
     cmd='python setup.py sdist'
     err=subprocess.call(shlex.split(cmd))
     if err!=0:
+      dsr.add_step('build source distribution by executing: %s'%cmd,'KO',comment='test return error %s'%err)
       raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
+    else:
+      dsr.add_step('execute : %s'%cmd,'OK',comment='test passed')
     if sys.platform=='win32':
       cmd='python setup.py sdist py2exe'
       err=subprocess.call(shlex.split(cmd))
       if err!=0:
+        dsr.add_step('[windows] build binary by executing: %s'%cmd,'KO',comment='test return error %s'%err)
         raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
-
+      else:
+        dsr.add_step('[windows] build binary by executing: %s'%cmd,'OK',comment='test passed')
+    end=datetime.datetime.now()
     clean_build()
+    #dsr.result='OK'
+    dsr.duration='%s' %(end-start)
+    #dsr.tofile(os.path.join('test','build.json'))
+    dsr.tofile(os.path.join('test','build.Dsr'))
+
+  def test_4_errors(self):
+    dsr=dsr2html.Dsr()
+    dsr.title='errors style'
+    dsr.add_step('test 1 error','KO',comment='test KO\nerror something\nbut not this\n error 1')
+    dsr.add_step('test 2 error','OK',comment='but error when doing something\nandnot this\n\n')
+    dsr.add_step('test 3 error','NA',comment='Not available tests\n but some comment error\n')
+    #dsr.result='OK'
+    dsr.tofile(os.path.join('test','errors_style.Dsr'))
       
   def tearDown(self):
-    pass
-
+    subprocess.call(shlex.split('python dsr2html.py -q -tpl %s test' %(os.path.join('test','test.tpl'))))
+    
 def testsuite():    
   return unittest.TestLoader().loadTestsFromTestCase(Tests)
 
