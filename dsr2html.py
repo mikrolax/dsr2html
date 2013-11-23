@@ -34,6 +34,87 @@ static_files+=glob.glob(os.path.join(_module_path(), 'static','*.png'))
 
 default_title='Test Report'
 errors_expressions=['error','ko','failed']
+
+import json #py2.6+ only...
+
+class Dsr(object):
+  def __init__(self):
+    self.name='default name'
+    self.title='default title'
+    self.description='description of the test'
+    self.steps=[]
+    self.result=None
+    self.duration=None
+    self.dsrdict_header={'name':self.name,
+                         'title':self.title,
+                         'description':self.description}
+    self.dsrdict_global={'result'    :self.result,
+                         'duration'  :self.duration}
+    self.dsrdict={'header':self.dsrdict_header,
+                  'step'  :self.steps, 
+                  'global':self.dsrdict_global}
+  
+  def add_step(self,action,step_result,comment=''):
+    logging.info('%s add step %s' %(self.name,len(self.steps)))
+    step={'action':action,
+          'step_result':step_result, 
+          'comment':comment}
+    self.steps.append(step)  
+
+  def get(self):
+    return self.dsrdict
+      
+  def toXML(self,filepath):
+    logging.warning('to XML not implemented')
+    errorFound = 0
+    if len(self.steps) > 0:
+      test = ET.Element('test')
+      header = ET.SubElement(test, 'header')
+      name = ET.SubElement(header, 'name')
+      name.text = self.name
+      title = ET.SubElement(header, 'title')
+      title.text = self.title
+      description = ET.SubElement(header, 'description')
+      description.text = self.description
+      steps = ET.SubElement(test, 'steps')
+      stepNb = 0
+      for item in self.steps:
+        step = ET.SubElement(steps, 'step')
+        stepNb += 1
+        number = ET.SubElement(step, 'number')
+        number.text = '%s' %stepNb
+        action = ET.SubElement(step, 'action')
+        action.text = '%s' %item['action']
+        #waited_result = ET.SubElement(step, 'waited_result')
+        #waited_result.text = 'Should be equal.'
+        comment = ET.SubElement(step, 'comment')
+        comment.text = '%s' %item['comment']
+        step_result = ET.SubElement(step, 'step_result')
+        step_result.text='%s' %item['step_result']
+        if step_result.text.lower() in errors_expressions:
+          errorFound += 1
+      globalid = ET.SubElement(test, 'global')
+      result = ET.SubElement(globalid, 'result')
+      if errorFound == 0:
+        result.text = 'OK'
+      else:
+        result.text = 'KO (%s/%s)' %(errorFound,stepNb)
+      duration = ET.SubElement(globalid, 'duration')
+      duration.text = self.duration
+      self.tree = ET.ElementTree(test)
+      logging.debug('writing %s' %filepath)
+      fout=open(filepath, 'w')
+      self.tree.write(fout)
+
+  def tofile(self,path):
+    logging.info('write %s' %path)
+    if os.path.splitext(path)[1] =='.json':  
+      json.dump(self.dsrdict,open(path,'w'))
+    elif os.path.splitext(path)[1] =='.Dsr':
+      self.toXML(path)
+    else:
+      logging.error('error invalid extension %s' %os.path.splitext(path)[1])
+           
     
 class Dsr2Html(object):
   def __init__(self): 
@@ -105,32 +186,34 @@ class Dsr2Html(object):
         if item.text:
           comment_lines=item.text.split('\n')
           for line in comment_lines:
-            for expression in errors_expressions:
-              if expression in line.lower():
-                comment+='<b><span style=\"color:#FF0000\"> %s </span></b>' %line
-	      else:
-                comment+=line
-            comment+='<br>'
-      if elem.find('step_result').text == 'OK':
+            if any(s in line.lower() for s in errors_expressions):
+              comment+='<b><span style=\"color:#FF0000\"> %s </span></b><br>' %line
+            else:
+	            comment+=line+'<br>'
+      if 'OK' in elem.find('step_result').text:
         html+='<tr class="success">'    
-      elif elem.find('step_result').text == 'KO':
+      elif 'KO' in elem.find('step_result').text:
         html+='<tr class="error">'    
       else:
         html+='<tr>'
       actionContent = elem.find('action').text.split('\n')
       html+='<td> %s </td><td>' %(elem.find('number').text)
+      if len(actionContent) > 1:
+        html+='<ul>'
       for actionContentLine in actionContent:
-        html+='<ol>'
-        if len(actionContentLine) > 0:
+        if len(actionContent) > 1:
           html+='<li> %s </li>' %(actionContentLine)
-        html+='</ol>'
+        else:  
+          html+='%s' %(actionContentLine)
+      if len(actionContent) > 1:
+        html+='</ul>'
       html+='</td>'
       #html+='<td>%s</td><td>%s</td>' %(elem.find('number').text,elem.find('action').text)
       step_res=elem.find('step_result').text
-      if  step_res == 'OK':
+      if 'OK' in step_res:
         html+='<td><span class="badge badge-success">%s</span></td>' %(step_res)
         self.stepResultNbOK += 1
-      elif step_res == 'KO':
+      elif 'KO' in step_res:
         html+='<td><span class="badge badge-warning">%s</span></td>' %(step_res)
         self.stepResultNbKO += 1
       else:
@@ -147,17 +230,17 @@ class Dsr2Html(object):
             <thead><tr><th>Filename</th><th>Title</th><th>Duration</th><th>Global Result</th></tr></thead>'
     for item in self.indexTable:
       links=os.path.splitext(item[0])[0]+'.html'
-      if item[3] == 'OK':
+      if 'OK' in item[3]:
         html+='<tr class="success">'    
-      elif item[3] == 'KO':
+      elif 'KO' in item[3]:
         html+='<tr class="error">'          
       else:
         html+='<tr>'    
       html += '<td>%s</td><td>%s</td><td>%s</td>'%(str(item[0]),str(item[1]),str(item[2]))
-      if item[3] == 'OK':
+      if 'OK' in item[3]:
         html+='<td><span class="badge badge-success">%s</span></td>'  %(item[3])
         self.testResultNbOK += 1
-      elif item[3] == 'KO':
+      elif 'KO' in item[3]:
         html+='<td><span class="badge badge-warning"rel="tooltip" title="at least one step failed. See details."> \
               %s</span></td>' %(item[3])
         self.testResultNbKO += 1
