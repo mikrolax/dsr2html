@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
     self.cmd=['python dsr2html.py -h',
               'python dsr2html.py -d test', 
               'python dsr2html.py -q test',
-              'python dsr2html.py -tpl %s -of _custom test' %test_tpl]    
+              'python dsr2html.py -tpl %s -of _doc test' %test_tpl]    
     
   def test_1_module_process_path(self):
     dsr=dsr2html.Dsr()
@@ -57,16 +57,12 @@ class Tests(unittest.TestCase):
     dsr.description='Test cli() module function'
     start=datetime.datetime.now()
     for cmd in self.cmd:
-      print 'test cmd : %s' %cmd
-      err=subprocess.call(shlex.split(cmd))
-      if err!=0:
-        dsr.add_step('test command line interface by executing: %s'%cmd,'OK',comment='test return error %s'%err)
-        #self.dsr.add_step('test command line interface by executing: %s' %cmd,'OK',comment='test return error %s'%err)
-        raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
-      else:
-        dsr.add_step('test command line interface by executing %s'%cmd,'OK',comment='test passed')
-        #self.dsr.add_step('test command line interface by executing %s' %cmd,'OK',comment='test passed')
-      #self.assertEqual(err,0)
+      try:
+        out=subprocess.check_output(shlex.split(cmd),stderr=subprocess.STDOUT)
+        dsr.add_step('execute: %s'%cmd,'OK',comment=out)
+      except CalledProcessError:
+        dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
+        #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     end=datetime.datetime.now()
     dsr.duration='%s' %(end-start)
     #dsr.tofile(os.path.join('test','cli.json'))
@@ -79,26 +75,25 @@ class Tests(unittest.TestCase):
     dsr.description='Test build'
     start=datetime.datetime.now()
     cmd='python setup.py sdist'
-    err=subprocess.call(shlex.split(cmd))
-    if err!=0:
-      dsr.add_step('build source distribution by executing: %s'%cmd,'KO',comment='test return error %s'%err)
-      raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
-    else:
-      dsr.add_step('execute : %s'%cmd,'OK',comment='test passed')
+    try:
+      out=subprocess.check_output(shlex.split(cmd))
+      dsr.add_step('execute: %s'%cmd,'OK',comment=out)
+    except CalledProcessError:
+      dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
+      #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     if sys.platform=='win32':
       cmd='python setup.py sdist py2exe'
-      err=subprocess.call(shlex.split(cmd))
-      if err!=0:
-        dsr.add_step('[windows] build binary by executing: %s'%cmd,'KO',comment='test return error %s'%err)
-        raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
-      else:
-        dsr.add_step('[windows] build binary by executing: %s'%cmd,'OK',comment='test passed')
+      try:
+        out=subprocess.check_output(shlex.split(cmd))
+        dsr.add_step('[windows] build binary execute: %s'%cmd,'OK',comment=out)
+      except CalledProcessError:
+        dsr.add_step('[windows] build binary execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
+        #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     end=datetime.datetime.now()
-    clean_build()
-    #dsr.result='OK'
     dsr.duration='%s' %(end-start)
     #dsr.tofile(os.path.join('test','build.json'))
     dsr.tofile(os.path.join('test','build.Dsr'))
+    clean_build()
 
   def test_4_errors(self):
     dsr=dsr2html.Dsr()
@@ -106,16 +101,15 @@ class Tests(unittest.TestCase):
     dsr.add_step('test 1 error','KO',comment='test KO\nerror something\nbut not this\n error 1')
     dsr.add_step('test 2 error','OK',comment='but error when doing something\nandnot this\n\n')
     dsr.add_step('test 3 error','NA',comment='Not available tests\n but some comment error\n')
-    #dsr.result='OK'
     dsr.tofile(os.path.join('test','errors_style.Dsr'))
       
   def tearDown(self):
-    subprocess.call(shlex.split('python dsr2html.py -q -tpl %s test' %(os.path.join('test','test.tpl'))))
+    subprocess.call(shlex.split('python dsr2html.py -q test'))
     
 def testsuite():    
   return unittest.TestLoader().loadTestsFromTestCase(Tests)
 
 if __name__=="__main__":
   results=unittest.TextTestRunner(verbosity=2).run(testsuite())
-  sys.exit(0)
+  sys.exit(len(results.errors)+len(results.failures))
   

@@ -65,7 +65,6 @@ class Dsr(object):
     return self.dsrdict
       
   def toXML(self,filepath):
-    logging.warning('to XML not implemented')
     errorFound = 0
     if len(self.steps) > 0:
       test = ET.Element('test')
@@ -96,7 +95,7 @@ class Dsr(object):
       globalid = ET.SubElement(test, 'global')
       result = ET.SubElement(globalid, 'result')
       if errorFound == 0:
-        result.text = 'OK'
+        result.text = 'OK (%s)' %stepNb
       else:
         result.text = 'KO (%s/%s)' %(errorFound,stepNb)
       duration = ET.SubElement(globalid, 'duration')
@@ -174,11 +173,12 @@ class Dsr2Html(object):
                 <dt>title</dt><dd> %s </dd> \
                 <dt>description</dt>\n\t<dd>%s</dd> \
               </dl>\n' %(elem.find('name').text,elem.find('title').text,elem.find('description').text)
-    html += '</div><table id="testtable" class="table"> \
+    html += '</div><table id="testtable" class="table table-condensed table-hover"> \
               <thead><tr> \
                 <th>StepNb</th> \
-                <th>Action</th>\n\t<th>Result</th>\n\t<th>Comment</th>\n\t \
-              </tr></thead>\n\t'
+                <th>Result</th> \
+                <th>Action/Comment</th> \
+              </tr></thead>'
     for elem in self.stepElemLst:
       comment=''
       commentLst=elem.findall('comment')
@@ -196,18 +196,19 @@ class Dsr2Html(object):
         html+='<tr class="error">'    
       else:
         html+='<tr>'
+      html+='<td> %s </td>' %(elem.find('number').text)
       actionContent = elem.find('action').text.split('\n')
-      html+='<td> %s </td><td>' %(elem.find('number').text)
+      action=''
       if len(actionContent) > 1:
-        html+='<ul>'
+        action+='<ul>'
       for actionContentLine in actionContent:
         if len(actionContent) > 1:
-          html+='<li> %s </li>' %(actionContentLine)
+          action+='<li> %s </li>' %(actionContentLine)
         else:  
-          html+='%s' %(actionContentLine)
+          action+='%s' %(actionContentLine)
       if len(actionContent) > 1:
-        html+='</ul>'
-      html+='</td>'
+        action+='</ul>'
+      #html+='<td> %s </td>' %action
       #html+='<td>%s</td><td>%s</td>' %(elem.find('number').text,elem.find('action').text)
       step_res=elem.find('step_result').text
       if 'OK' in step_res:
@@ -220,13 +221,16 @@ class Dsr2Html(object):
         html+='<td><span class="badge">%s</span></td>' %(step_res)  
         self.stepResultNbOther += 1
       self.stepResultNb += 1
-      html+='<td>%s</td></tr>' %(comment)  
+      #html+='<td>%s</td></tr>' %(comment)  
+      html+='<td>\
+              <table><tr><td><strong>Action</strong></td><td> %s </td></tr>\
+              <tr><td><strong>Comment</strong></td><td> %s </td></td></table></td></tr>' %(action,comment)
     html+='</tbody></table>'
     self.indexTable.append([self.name,title,self.duration,self.globalResult])
     return html
 
   def get_htmlIndex(self):
-    html = '<table id="globaltable" class="table tablesorter">\
+    html = '<table id="globaltable" class="table tablesorter table-condensed table-hover">\
             <thead><tr><th>Filename</th><th>Title</th><th>Duration</th><th>Global Result</th></tr></thead>'
     for item in self.indexTable:
       links=os.path.splitext(item[0])[0]+'.html'
@@ -283,13 +287,13 @@ class Dsr2Html(object):
   def writeIndex(self,filepath,content):
     logging.info('writing index.html to %s' %filepath)
     statLst = []
-    table = '<table class="table"><thead><tr><th></th><th>Nb</th><th>OK</th><th>KO</th><th>Other</th></tr></thead> \
-                <tr><td>Tests</td> \
+    table = '<table class="table table-condensed"><thead><tr><th></th><th>Nb</th><th>OK</th><th>KO</th><th>Other</th></tr></thead> \
+                <tr><td><strong>Tests</strong></td> \
                 <td>%s</td> \
                 <td><span class="label label-success"> %s (%.2f &#37) </span> </td>\
                 <td> <span class="label label-important"> %s (%.2f &#37) </span></td> \
                 <td> <span class="label"> %s (%.2f &#37) </span> </td></tr> \
-                <td>Steps</td> \
+                <td><strong>Steps</strong></td> \
                 <td>%s</td> \
                 <td><span class="label label-success"> %s (%.2f &#37) </span> </td>\
                 <td> <span class="label label-important"> %s (%.2f &#37) </span></td> \
@@ -393,7 +397,7 @@ def cli():
                                    epilog=' by %s' %(__author__))
   paser_log=parser.add_mutually_exclusive_group()
   paser_log.add_argument("-d", "--debug",action='store_true',default=False,help="verbose output logging")
-  paser_log.add_argument("-q", "--quiet",action='store_true',default=False,help="limit output logging to warning/error")
+  paser_log.add_argument("-q", "--quiet",action='store_true',default=False,help="limit output logging")
   parser.add_argument("-tpl", "--template",type=str,default=None,help="template file to use.") 
   parser.add_argument("-title",type=str,default=None,help="html page title")
   parser.add_argument("-of","--output_folder",type=str,default=None,help="output folder path.")                 

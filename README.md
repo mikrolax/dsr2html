@@ -47,7 +47,7 @@ dsr2html does not need to be installed, but you can:
 
 * __Use__   
 
-Let's try to print software's version:  
+Let's try to print software version:  
 
 If installed run  
 
