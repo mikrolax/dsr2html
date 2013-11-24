@@ -92,10 +92,14 @@ class Tests(unittest.TestCase):
     if sys.platform=='win32':
       cmd='python setup.py sdist py2exe'
       try:
-        out=subprocess.check_output(shlex.split(cmd))
+        if sys.version_info <= (2,7):
+          subprocess.check_call(shlex.split(cmd),stdout=open('cmd.log','w'),stderr=subprocess.STDOUT)
+          out=open('cmd.log','r').read()
+        else:
+          out=subprocess.check_output(shlex.split(cmd))
         dsr.add_step('[windows] build binary execute: %s'%cmd,'OK',comment=out)
-      except subprocess.CalledProcessError:
-        dsr.add_step('[windows] build binary execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
+      except subprocess.CalledProcessError as e:
+        dsr.add_step('[windows] build binary execute: %s'%cmd,'KO',comment='test return error %s'%(e.returncode))     
         #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     end=datetime.datetime.now()
     dsr.duration='%s' %(end-start)
@@ -106,7 +110,7 @@ class Tests(unittest.TestCase):
   def test_4_errors(self):
     dsr=dsr2html.Dsr()
     dsr.title='errors style'
-    dsr.add_step('test 1 error','KO',comment='test KO\nerror something\nbut not this\n error 1')
+    dsr.add_step('action 1\naction 2\n','KO',comment='test KO\nerror something\nbut not this\n error 1')
     dsr.add_step('test 2 error','OK',comment='but error when doing something\nandnot this\n\n')
     dsr.add_step('test 3 error','NA',comment='Not available tests\n but some comment error\n')
     dsr.tofile(os.path.join('test','errors_style.Dsr'))

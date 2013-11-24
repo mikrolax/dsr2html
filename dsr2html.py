@@ -202,7 +202,7 @@ class Dsr2Html(object):
       if len(actionContent) > 1:
         action+='<ul>'
       for actionContentLine in actionContent:
-        if len(actionContent) > 1:
+        if len(actionContent) > 1 and actionContentLine.strip()!='':
           action+='<li> %s </li>' %(actionContentLine)
         else:  
           action+='%s' %(actionContentLine)
