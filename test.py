@@ -60,7 +60,7 @@ class Tests(unittest.TestCase):
       try:
         out=subprocess.check_output(shlex.split(cmd),stderr=subprocess.STDOUT)
         dsr.add_step('execute: %s'%cmd,'OK',comment=out)
-      except CalledProcessError:
+      except subprocess.CalledProcessError:
         dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
         #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     end=datetime.datetime.now()
@@ -78,7 +78,7 @@ class Tests(unittest.TestCase):
     try:
       out=subprocess.check_output(shlex.split(cmd))
       dsr.add_step('execute: %s'%cmd,'OK',comment=out)
-    except CalledProcessError:
+    except subprocess.CalledProcessError:
       dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
       #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     if sys.platform=='win32':
@@ -86,7 +86,7 @@ class Tests(unittest.TestCase):
       try:
         out=subprocess.check_output(shlex.split(cmd))
         dsr.add_step('[windows] build binary execute: %s'%cmd,'OK',comment=out)
-      except CalledProcessError:
+      except subprocess.CalledProcessError:
         dsr.add_step('[windows] build binary execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
         #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     end=datetime.datetime.now()
