@@ -122,6 +122,11 @@ def testsuite():
   return unittest.TestLoader().loadTestsFromTestCase(Tests)
 
 if __name__=="__main__":
+  if os.path.dirname(__file__)!='':
+    old=os.getcwd()
+    os.chdir(os.path.dirname(__file__)) 
   results=unittest.TextTestRunner(verbosity=2).run(testsuite())
+  if os.path.dirname(__file__)!='':
+    os.chdir(old)  
   sys.exit(len(results.errors)+len(results.failures))
   
