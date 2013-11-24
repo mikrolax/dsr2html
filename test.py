@@ -58,10 +58,14 @@ class Tests(unittest.TestCase):
     start=datetime.datetime.now()
     for cmd in self.cmd:
       try:
-        out=subprocess.check_output(shlex.split(cmd),stderr=subprocess.STDOUT)
+        if sys.version_info <= (2,7):
+          subprocess.check_call(shlex.split(cmd),stdout=open('cmd.log','w'),stderr=subprocess.STDOUT)
+          out=open('cmd.log','r').read()
+        else:
+          out=subprocess.check_output(shlex.split(cmd),stderr=subprocess.STDOUT)
         dsr.add_step('execute: %s'%cmd,'OK',comment=out)
-      except subprocess.CalledProcessError:
-        dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
+      except subprocess.CalledProcessError as e:
+        dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(e.returncode))     
         #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     end=datetime.datetime.now()
     dsr.duration='%s' %(end-start)
@@ -76,10 +80,14 @@ class Tests(unittest.TestCase):
     start=datetime.datetime.now()
     cmd='python setup.py sdist'
     try:
-      out=subprocess.check_output(shlex.split(cmd))
+      if sys.version_info <= (2,7):
+        subprocess.check_call(shlex.split(cmd),stdout=open('cmd.log','w'),stderr=subprocess.STDOUT)
+        out=open('cmd.log','r').read()
+      else:
+        out=subprocess.check_output(shlex.split(cmd))
       dsr.add_step('execute: %s'%cmd,'OK',comment=out)
-    except subprocess.CalledProcessError:
-      dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(CalledProcessError.returncode))     
+    except subprocess.CalledProcessError as e:
+      dsr.add_step('execute: %s'%cmd,'KO',comment='test return error %s'%(e.returncode))     
       #raise TestError('\n\tcmd: %s\n\terror: %s' %(cmd,err))
     if sys.platform=='win32':
       cmd='python setup.py sdist py2exe'
