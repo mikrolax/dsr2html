@@ -44,14 +44,14 @@
       </div>
     </div>      
   
-  <!-- <div class="container"> -->
+  <div class="container"> 
   $content
   <footer>
   <hr>
   $perf
   <p class="pull-right"> &copy Sebastien Stang | 2012-2013 </p>
   </footer>      
-  <!-- </div>  -->
+  </div> 
   
   <script src="static/jquery.min.js"></script>
   <script src="static/bootstrap.min.js"></script>

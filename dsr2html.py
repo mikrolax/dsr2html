@@ -35,7 +35,7 @@ static_files+=glob.glob(os.path.join(_module_path(), 'static','*.png'))
 default_title='Test Report'
 errors_expressions=['error','ko','failed']
 
-import json #py2.6+ only...
+#import json  #py2.6+ only
 
 class Dsr(object):
   def __init__(self):
@@ -107,12 +107,14 @@ class Dsr(object):
 
   def tofile(self,path):
     logging.info('write %s' %path)
-    if os.path.splitext(path)[1] =='.json':  
-      json.dump(self.dsrdict,open(path,'w'))
-    elif os.path.splitext(path)[1] =='.Dsr':
+    #if os.path.splitext(path)[1] =='.json':  
+    #  json.dump(self.dsrdict,open(path,'w'))
+    if os.path.splitext(path)[1] =='.Dsr':
       self.toXML(path)
     else:
-      logging.error('error invalid extension %s' %os.path.splitext(path)[1])
+      logging.warning('invalid extension %s use .Dsr' %os.path.splitext(path)[1])
+      path=path+'.Dsr'
+      self.toXML(path)
            
     
 class Dsr2Html(object):
@@ -354,6 +356,7 @@ class Dsr2Html(object):
     else:
       logging.warning('Nothing to do, no .Dsr files found')
 
+'''
   def load_json(self,folder): 
     files=glob.glob(os.path.join(folder,'*.json')) #load recursively?
     results={}
@@ -367,6 +370,16 @@ class Dsr2Html(object):
     dsr=self.load_json(filepath)
     #output tests/steps table per json file
     pass
+
+def process_json(filepath,log_level=logging.INFO):
+  logging.basicConfig(format=log_format,level=log_level)
+  if os.path.exists(filepath):
+    logging.info('process_json %s' %filepath)
+    converter=Dsr2Html()
+    converter.run_from_json(filepath)
+  else:
+    logging.error('Invalid path : %s' %filepath)
+'''
     
     
 log_format='%(asctime)s:%(levelname)s - %(message)s' #%(name)s
@@ -379,15 +392,6 @@ def process_path(path,log_level=logging.INFO):
     converter.run(path) 
   else:
     logging.error('Invalid path : %s' %path)
-
-def process_json(filepath,log_level=logging.INFO):
-  logging.basicConfig(format=log_format,level=log_level)
-  if os.path.exists(filepath):
-    logging.info('process_json %s' %filepath)
-    converter=Dsr2Html()
-    converter.run_from_json(filepath)
-  else:
-    logging.error('Invalid path : %s' %filepath)
     
 def cli():
   import argparse
