@@ -1,4 +1,4 @@
-#/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -26,7 +26,7 @@ setup(
     description=dsr2html.__description__,
     license=dsr2html.__license__,
     py_modules=['dsr2html'],        
-    entry_points={'console_scripts': ['dsr2html = dsr2html:cli']},      
+    entry_points={'console_scripts': ['dsr2html=dsr2html:_cli_dsr2html','cmd2dsr=dsr2html:_cli_cmd2dsr','dsr_serve=dsr2html:_cli_serve']},       
     #py2exe specific
     data_files=[('static',data)],
     options = {'py2exe': {'bundle_files': 1}}, #, 'optimize': 2 ,'dist_dir':'bin/'
